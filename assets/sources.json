@@ -1,0 +1,42 @@
+[
+  {
+    "kind": "wafer",
+    "file": "wafer.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Silicon_wafer.jpg",
+    "author": "Inductiveload",
+    "license": "Public domain（作者声明）",
+    "license_url": "https://commons.wikimedia.org/wiki/File:Silicon_wafer.jpg",
+    "caption": "真实硅晶圆：整块是圆盘，表面重复的矩形区域是芯片单元；照片展示一块已有图形的晶圆。",
+    "changes": "原始文件，未修改"
+  },
+  {
+    "kind": "die",
+    "file": "die.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Silicon_die.jpg",
+    "author": "Le hollandais volant",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "caption": "真实裸芯片（die）：一小块尚未封装的硅芯片，表面可以看到电路图形与反光。",
+    "changes": "原始文件，未修改"
+  },
+  {
+    "kind": "package",
+    "file": "package.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Ic-photo-Microchip--PIC16C745-1_SPC02--(PIC16-MCU).jpg",
+    "author": "ZyMOS",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "caption": "真实封装芯片：PIC16C745 微控制器的双列直插封装。外面看见的是保护与连接结构，裸芯片位于内部；它与左侧晶圆、裸芯片照片不是同一产品。",
+    "changes": "原始文件，未修改"
+  },
+  {
+    "kind": "machine",
+    "file": "machine.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Photolithography_lab_in_the_LCN_cleanroom.jpg",
+    "author": "O. Usher (UCL MAPS)",
+    "license": "CC BY 2.0",
+    "license_url": "https://creativecommons.org/licenses/by/2.0/",
+    "caption": "真实光刻实验室：伦敦纳米技术中心的洁净室。橙色照明帮助避免短波长环境光影响光刻胶；这不是量产 EUV 光刻机照片。",
+    "changes": "原始文件，未修改"
+  }
+]
