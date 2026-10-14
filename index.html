@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="zh-CN">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="给 AI 工程师的 OPC 图解入门。认识晶圆、裸芯片、封装，探索光刻补偿、工具流程和模型数据。"><title>看懂 OPC · 从晶圆到模型</title><link rel="stylesheet" href="style.css?v=three-concepts"><style>.fabrication-steps svg{width:100%;max-width:400px;margin:8px auto}.fabrication-reading svg{width:100%;max-width:420px;margin:14px auto}</style></head>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="给 AI 工程师的 OPC 图解入门。认识晶圆、裸芯片、封装，探索光刻补偿、工具流程和模型数据。"><title>看懂 OPC · 从晶圆到模型</title><link rel="stylesheet" href="style.css?v=klayout-example"><style>.fabrication-steps svg{width:100%;max-width:400px;margin:8px auto}.fabrication-reading svg{width:100%;max-width:420px;margin:14px auto}</style></head>
 <body>
 <header class="topbar"><a class="brand" href="#"><span class="brand-icon">◉</span> 看懂 OPC<span class="brand-sub">半导体 / AI 入门手册</span></a><a class="top-action" href="#lab">动手看补偿 <span>↗</span></a></header>
 <aside class="sidebar"><div class="sidebar-label">学习地图 <span>01—08</span></div><nav aria-label="章节导航"><a href="#objects">01 <span>先认识实物</span></a><a href="#lithography">02 <span>光刻怎么印图形</span></a><a href="#lab">03 <span>OPC 补偿实验</span></a><a href="#pipeline">04 <span>输入与工作流</span></a><a href="#tools">05 <span>软件与真实难点</span></a><a href="#ai">06 <span>模型在哪介入</span></a><a href="#data">07 <span>数据怎么构造</span></a><a href="#start">08 <span>从一个小项目开始</span></a></nav><div class="sidebar-note"><span class="tiny-dot"></span> 从零开始，不需要电路基础<br>照片、示意与预测分开呈现</div><div class="progress-label">阅读进度 <span id="progress-text">0%</span></div><div class="progress-track"><i id="progress-bar"></i></div></aside>
@@ -61,6 +61,13 @@
 <tr><td><strong>Datatype · 用途分类号</strong></td><td>与 layer 一起记录在几何图形上的另一个分类编号。</td><td>进一步区分同一 layer 下的图形类别。具体用途查对应工艺的映射表，不由 GDS 格式统一规定。</td></tr>
 </tbody></table></div>
 <div class="input-package"><b>Cell 管组织，layer / datatype 管分类</b><p><strong>一个 cell 内可以包含多种 layer / datatype 的图形；同一种分类也可以出现在多个 cell 中。</strong>查看器常把每个 layer / datatype 组合列为一个显示项，所以列表里“有几层”不等于实物有几层材料。</p><p><code>layer / datatype</code> 的斜杠只是软件显示两个编号的写法。下面直接用波导图里的 <code>1/0</code> 和 <code>1/1</code> 来读。</p></div>
+<div class="klayout-input-example" id="klayout-input-example">
+<h3>在真实软件里，对照这三个概念</h3>
+<figure class="waveguide-reference"><a href="assets/klayout-cell-layers.png" target="_blank" rel="noopener"><img src="assets/klayout-cell-layers.png" alt="用户提供的KLayout截图：左侧Cells列表选中sg13g2_a221oi_1，中间显示其多层几何，右侧Layers列表包含1/0、8/0、8/2等分类" loading="lazy"></a><figcaption>你提供的 KLayout 截图 · sg13g2_stdcell.gds · 点击查看原图</figcaption></figure>
+<ol><li><strong>左侧 Cells：选择查看哪个版图单元。</strong>图中选中的是 <code>sg13g2_a221oi_1</code>，上方标题也显示这个名称。列表里的其他名称是其他 cell，不是其他材料层。</li><li><strong>中间画布：显示当前单元的几何。</strong>不同分类的图形叠加在同一坐标中。颜色和斜线填充是显示样式；这不是芯片实物照片，也不能据此判断材料高度。</li><li><strong>右侧 Layers：列出 layer / datatype 组合。</strong><code>8/0</code> 与 <code>8/2</code> 的 layer 都是 8，datatype 分别是 0 和 2。它们可以分别显示和处理，但不表示两层不同高度的金属。</li></ol>
+<p>在 SG13G2 的图层约定里，<code>8/0</code> 是 Metal1 绘制图形，<code>8/2</code> 是 Metal1 引脚标记。<strong>截图显示分类编号，实际用途仍要查该工艺的图层表。</strong>不要按颜色猜它是哪种材料。</p>
+<p>画布左下角还有 <code>0.4 μm</code> 比例尺：GDS 不只包含 cell 和分类编号，还保存几何坐标及单位等信息，软件才能把它们按实际尺度画出来。</p>
+</div>
 <div class="layer-datatype-visual" id="layer-datatype-visual">
 <h3>用这张波导图理解 layer / datatype</h3>
 <p>先看左边的实物截面，再看右边的俯视版图：<strong>左边希望做出的不同宽度结构，用右边不同分类的二维图形来描述。</strong>这里只借这张图认识版图编号，不展开波导的加工流程。</p>
