@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="zh-CN">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="给 AI 工程师的 OPC 图解入门。认识晶圆、裸芯片、封装，探索光刻补偿、工具流程和模型数据。"><title>看懂 OPC · 从晶圆到模型</title><link rel="stylesheet" href="style.css?v=scan-monitor"><style>.fabrication-steps svg{width:100%;max-width:400px;margin:8px auto}.fabrication-reading svg{width:100%;max-width:420px;margin:14px auto}</style></head>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="给 AI 工程师的 OPC 图解入门。认识晶圆、裸芯片、封装，探索光刻补偿、工具流程和模型数据。"><title>看懂 OPC · 从晶圆到模型</title><link rel="stylesheet" href="style.css?v=validation-scope"><style>.fabrication-steps svg{width:100%;max-width:400px;margin:8px auto}.fabrication-reading svg{width:100%;max-width:420px;margin:14px auto}</style></head>
 <body>
 <header class="topbar"><a class="brand" href="#"><span class="brand-icon">◉</span> 看懂 OPC<span class="brand-sub">半导体 / AI 入门手册</span></a><a class="top-action" href="#lab">动手看补偿 <span>↗</span></a></header>
 <aside class="sidebar"><div class="sidebar-label">学习地图 <span>01—08</span></div><nav aria-label="章节导航"><a href="#objects">01 <span>先认识实物</span></a><a href="#lithography">02 <span>光刻怎么印图形</span></a><a href="#lab">03 <span>OPC 补偿实验</span></a><a href="#pipeline">04 <span>输入与工作流</span></a><a href="#tools">05 <span>软件与真实难点</span></a><a href="#ai">06 <span>模型在哪介入</span></a><a href="#data">07 <span>数据怎么构造</span></a><a href="#start">08 <span>从一个小项目开始</span></a></nav><div class="sidebar-note"><span class="tiny-dot"></span> 从零开始，不需要电路基础<br>照片、示意与预测分开呈现</div><div class="progress-label">阅读进度 <span id="progress-text">0%</span></div><div class="progress-track"><i id="progress-bar"></i></div></aside>
@@ -147,6 +147,19 @@
 <span class="eyebrow">一项 OPC 任务 · 扫描条件 → 读取指标 → 决定下一步</span>
 <h3>扫描什么？是在软件中换条件，检查同一掩模能否稳定印好。</h3>
 <p>这里的“扫描”是<strong>批量仿真不同条件</strong>，不是拿扫描仪扫描 GDS，也不是已经制造和测量了晶圆。假设我们已有某个加工层的目标、工艺模型和候选掩模，要检查它在工艺波动下是否仍然合格。</p>
+<h4>先分清：工艺模型、扫描条件和验收指标</h4>
+<div class="input-package"><b>掩模 + 本次条件 → 已校准的工艺模型 → 预测图形</b><p><strong>工艺模型</strong>是描述加工结果的数学计算关系及对应参数，通常包含光学成像、光刻胶响应，必要时包含刻蚀等效应；由设备 / 材料信息和实际量测校准。它不默认是神经网络，也不是 GDS。</p><p><strong>扫描条件</strong>是这次给模型输入哪些焦距、剂量等变化。模型需要具备描述这些变化的能力，并在相应范围内验证过。固定同一模型、换输入条件，才是在比较同一工艺下的波动。</p><p><strong>验收指标</strong>用来判断预测结果是否满足要求，例如边缘偏了多少、线宽是否合格、有无桥连。它们是输出的检查，不是输入的工艺变量。</p></div>
+<h4>整套验证要覆盖什么？按重要性先看这张地图</h4>
+<div class="table-wrap"><table><thead><tr><th>范围</th><th>关注什么</th><th>如何落实</th></tr></thead><tbody>
+<tr><td><strong>基础必读：模型与输入</strong></td><td>单位、图层派生、极性、邻域正确；模型对应当前加工层和预测终点。</td><td>输入检查与独立量测验证。模型本身不准，后面优化得到的高分也可能不可信。</td></tr>
+<tr><td><strong>重点：光刻工艺窗口</strong></td><td>焦距、剂量变化后，尺寸和形状能否保持合格。</td><td>固定候选做条件扫描，每个条件检查 EPE、CD、连接失败及辅助结构印出。</td></tr>
+<tr><td><strong>重点：掩模可制造性</strong></td><td>修正出来的窄线、小间隙、曲线等能否写入和加工。</td><td>掩模规则检查；需要时检查数据转换 / 分割后的误差、复杂度和写入成本。</td></tr>
+<tr><td><strong>连接相关层的重点：对准</strong></td><td>通孔与上下层线路错位后，是否仍能可靠连接。</td><td>跨层覆盖、间距和项目规定的偏移条件验证，不只是单层成像。</td></tr>
+<tr><td><strong>先进微小结构的重要项：随机效应</strong></td><td>相同设置重复加工时，偶发缺失、桥连等风险。</td><td>相应随机模型与重复量测验证。不能用平均轮廓或一次普通仿真代替。</td></tr>
+<tr><td><strong>按工艺补充：材料与后续加工</strong></td><td>胶厚、烘烤、显影、掩模误差、刻蚀及下层结构变化。</td><td>用支持这些效应的模型、工艺角或专项实验检查；部分由工艺控制和量测保证。</td></tr>
+<tr><td><strong>交付基础：覆盖与追溯</strong></td><td>代表图形、正式设计范围、输出版本与计算完整性。</td><td>回归测试与规定范围验证，保存条件、配置、日志和报告；局部通过不等于全芯片通过。</td></tr>
+</tbody></table></div>
+<p>“重点”不是要求每个工艺都执行完全一样的检查。<strong>项目要先定义风险与验收范围，再选择模型和验证方法。</strong>OPC 负责掩模修正，配套验证判断结果；设备控制、材料控制和实际量测共同保证制造过程。</p>
 <h4>1 · 先固定输入，再扫描焦距和剂量</h4>
 <div class="table-wrap"><table><thead><tr><th>项目</th><th>改变什么</th><th>为什么要检查</th></tr></thead><tbody>
 <tr><td><strong>焦距偏移 Focus</strong></td><td>相对标称焦平面的偏移，通常用 nm 表示。</td><td>实际加工可能偏离最佳焦点；检查偏焦时线端、线宽和孔是否仍合格。</td></tr>
@@ -172,13 +185,25 @@
 <tr><td><strong>跨层对准 / 覆盖检查</strong></td><td>任务需要时，检查通孔与上下层连接区域在规定偏移条件下是否满足覆盖或间距要求。</td><td>结合相关层定位连接风险，不把全部层简单叠加成一次曝光输入。</td></tr>
 </tbody></table></div>
 <p><strong>这里的轮廓与缺陷检查是模型预测。</strong>它们不是实际晶圆的量测结果或真实缺陷率。若要预测随机失败概率，还需要相应随机模型与验证，不能从一次平均轮廓仿真直接得到。</p>
+<h4>补充范围：工厂还有哪些变化，怎样纳入检查？</h4>
+<p>焦距和剂量是常见的扫描轴，下面这些变化也相关，但<strong>不是每项都能直接作为同一个模拟器的参数</strong>。需要明确模型支持、校准数据、变化范围及负责团队。</p>
+<div class="table-wrap"><table><thead><tr><th>变化来源</th><th>可能的影响</th><th>处理方式</th></tr></thead><tbody>
+<tr><td><strong>掩模制造误差</strong></td><td>实际掩模尺寸、位置或边界与数字设计不同；掩模误差可能传递或放大到晶圆。</td><td>项目要求时扫描掩模尺寸偏差等，并结合掩模检测。MEEF 描述掩模尺寸误差向晶圆尺寸误差的传递敏感度。</td></tr>
+<tr><td><strong>光学与曝光系统</strong></td><td>照明、像差等状态变化影响成像；场内 / 晶圆上的位置差异也可能相关。</td><td>相应模型配置、场位置或工艺角验证，结合设备校准和监控；不随意把设备配置改成另一套工艺。</td></tr>
+<tr><td><strong>光刻胶与烘烤、显影</strong></td><td>胶厚、材料响应、烘烤温度 / 时间、显影变化影响轮廓与尺寸。</td><td>详细物理模型或经验证的工艺角 / 紧凑模型，结合工艺实验。不能假设焦距和剂量已经代表全部胶变化。</td></tr>
+<tr><td><strong>刻蚀与图形转移</strong></td><td>横向侵蚀、侧壁、局部密度等使最终材料轮廓不同于胶轮廓。</td><td>若验收终点为刻蚀后结构，使用对应模型或综合校准、实际量测；只预测胶轮廓不能自动证明材料结构合格。</td></tr>
+<tr><td><strong>下层结构和材料堆叠</strong></td><td>表面高度、膜厚和反射特性影响后续光刻 / 加工。</td><td>按风险建模和评估，并结合沉积、平坦化等工艺控制；不能把所有跨层影响都简化成对准误差。</td></tr>
+<tr><td><strong>随机性与局部不均匀</strong></td><td>光子与材料反应随机性、局部尺寸变化，可能带来偶发失败。</td><td>随机模型及统计量测；LER / LWR 是边缘 / 线宽粗糙度，LCDU 描述局部关键尺寸均匀性，它们不自动等于缺陷概率。</td></tr>
+<tr><td><strong>颗粒、污染等缺陷</strong></td><td>即使设计和平均成像正确，也可能出现真实制造缺陷。</td><td>主要靠洁净控制、设备维护和缺陷检测等处理；不能指望通过移动掩模边缘解决全部制造问题。</td></tr>
+</tbody></table></div>
+<p><strong>这些变化不应全部独立、随意组合。</strong>实际变量可能相关；条件集应由工艺能力、数据和验收要求决定，避免生成物理上不合理的组合。需要覆盖的变化若没有可靠模型，应通过专项实验 / 量测补充，并明确仿真结论的边界。</p>
 <h4>3 · 运行过程中，还要监控计算是否正常</h4>
 <ul><li><strong>任务状态和日志：</strong>模型、输入是否加载成功，任务是否报错，各个条件是否都完成，输出文件是否齐全。</li><li><strong>迭代收敛：</strong>误差或目标函数怎样变化，是否停滞、反复波动，是否因达到迭代上限而停止。停止不等于通过验收。</li><li><strong>计算成本：</strong>耗时、内存峰值和实际计算资源；调优比较要计入失败实验、验证和等待成本。</li></ul>
 <div class="input-package"><b>不要混淆两种“改变参数”</b><p><strong>条件扫描：</strong>掩模不变，换焦距 / 剂量，检查稳健性。<br><strong>配方调优：</strong>调整分段、移动限制、迭代或辅助结构策略，生成新掩模，再用同一组条件比较。</p></div>
 <h4>工程师怎样根据这些报告决定下一步？</h4>
 <ol><li>确认任务成功、所有规定条件都有结果。</li><li>读最差条件的 EPE、CD 和失败类型，按坐标定位问题。</li><li>若标称通过、偏焦失败，重点诊断跨条件稳健性；若 MRC 失败，即使成像好也不能直接交付。</li><li>修改相关策略，生成新候选，重复同一套扫描和检查，再扩大回归。</li></ol>
 <p>一次候选的记录至少包括：<strong>掩模版本、模型与配方版本、条件表、各条件指标与违规坐标、耗时，以及通过 / 失败原因。</strong>限值应在比较前确定；这些检查全部满足项目要求后，才能进入后续交付。</p>
-<div class="source-links"><a href="https://www.synopsys.com/manufacturing/mask-solutions/proteus.html" target="_blank" rel="noopener">Proteus：工艺窗口、EPE、CD 与跨层验证 ↗</a><a href="https://github.com/OpenOPC/OpenILT#terminologies" target="_blank" rel="noopener">OpenILT：EPE、PVBand 与评价指标 ↗</a></div>
+<div class="source-links"><a href="https://www.synopsys.com/manufacturing/mask-solutions/proteus.html" target="_blank" rel="noopener">Proteus：工艺窗口、EPE、CD 与跨层验证 ↗</a><a href="https://github.com/OpenOPC/OpenILT#terminologies" target="_blank" rel="noopener">OpenILT：EPE、PVBand 与评价指标 ↗</a><a href="https://blogs.sw.siemens.com/calibre/2025/09/11/siemens-imec-collaboration-reduces-stochastic-failures-in-euv-lithography-by-orders-of-magnitude-in-wafer-level-experimental-validation/" target="_blank" rel="noopener">Siemens / imec：随机模型与晶圆验证 ↗</a><a href="https://lithoguru.com/scientist/lithobasics.html" target="_blank" rel="noopener">Chris Mack：胶、烘烤、显影及图形转移 ↗</a><a href="https://www.lithoguru.com/scientist/glossary/M.html" target="_blank" rel="noopener">光刻术语：MEEF ↗</a></div>
 <p class="small">这是跨工具的工作说明，不是某软件的完整参数清单。实际变量、采样、指标定义和阈值需与工艺及工具版本配套。</p>
 </div>
 </section>
