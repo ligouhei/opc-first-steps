@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="zh-CN">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="给 AI 工程师的 OPC 图解入门。认识晶圆、裸芯片、封装，探索光刻补偿、工具流程和模型数据。"><title>看懂 OPC · 从晶圆到模型</title><link rel="stylesheet" href="style.css?v=waveguide"><style>.fabrication-steps svg{width:100%;max-width:400px;margin:8px auto}.fabrication-reading svg{width:100%;max-width:420px;margin:14px auto}</style></head>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="给 AI 工程师的 OPC 图解入门。认识晶圆、裸芯片、封装，探索光刻补偿、工具流程和模型数据。"><title>看懂 OPC · 从晶圆到模型</title><link rel="stylesheet" href="style.css?v=three-concepts"><style>.fabrication-steps svg{width:100%;max-width:400px;margin:8px auto}.fabrication-reading svg{width:100%;max-width:420px;margin:14px auto}</style></head>
 <body>
 <header class="topbar"><a class="brand" href="#"><span class="brand-icon">◉</span> 看懂 OPC<span class="brand-sub">半导体 / AI 入门手册</span></a><a class="top-action" href="#lab">动手看补偿 <span>↗</span></a></header>
 <aside class="sidebar"><div class="sidebar-label">学习地图 <span>01—08</span></div><nav aria-label="章节导航"><a href="#objects">01 <span>先认识实物</span></a><a href="#lithography">02 <span>光刻怎么印图形</span></a><a href="#lab">03 <span>OPC 补偿实验</span></a><a href="#pipeline">04 <span>输入与工作流</span></a><a href="#tools">05 <span>软件与真实难点</span></a><a href="#ai">06 <span>模型在哪介入</span></a><a href="#data">07 <span>数据怎么构造</span></a><a href="#start">08 <span>从一个小项目开始</span></a></nav><div class="sidebar-note"><span class="tiny-dot"></span> 从零开始，不需要电路基础<br>照片、示意与预测分开呈现</div><div class="progress-label">阅读进度 <span id="progress-text">0%</span></div><div class="progress-track"><i id="progress-bar"></i></div></aside>
@@ -50,18 +50,17 @@
 <p class="small muted">曲线由教学公式绘制，不是物理仿真或量测。为解释阈值概念，示意采用亮区域对应目标开口；实际图形极性与光刻胶响应随工艺变化。不能只用“低于一个固定阈值”判断所有工艺中的 SRAF。</p><a class="source-link" href="https://www.siemens.com/en-us/products/ic/calibre-manufacturing/curvilinear-data-preparation/nmclsraf/" target="_blank" rel="noopener">来源：Siemens SRAF 成像改善与防止印出 ↗</a></div>
 <div class="three-col mini-cards"><article><span>RULE-BASED</span><h3>查规则补偿</h3><p>依据线宽、间距和图形类型，应用预先制定的修正规则。</p></article><article><span>MODEL-BASED</span><h3>仿真 → 移边 → 重算</h3><p>将边缘切成小段，根据仿真误差迭代调整。局部与邻域相互影响。</p></article><article><span>INVERSE LITHOGRAPHY</span><h3>ILT：更自由的形状优化</h3><p>可优化像素、曲线等表示；同时面临计算与掩模制造约束。</p></article></div></section>
 
-<section id="pipeline" class="chapter"><div class="chapter-head"><span class="chapter-number">04 / 输入与工程工作流</span><h2>先读懂版图输入，<br>再跟着工程师运行修正。</h2><p>先用一颗芯片认识 cell 和图层，再沿着“接收任务 → 准备输入 → 计算 → 诊断 → 修正 → 验证”理解工程师的工作。</p></div><div class="layout-input" id="layout-input"><span class="eyebrow">先认识输入 · 再运行 OPC</span>
+<section id="pipeline" class="chapter"><div class="chapter-head"><span class="chapter-number">04 / 输入与工程工作流</span><h2>先读懂版图输入，<br>再跟着工程师运行修正。</h2><p>先认识 cell、layer 和 datatype，再沿着“接收任务 → 准备输入 → 计算 → 诊断 → 修正 → 验证”理解工程师的工作。</p></div><div class="layout-input" id="layout-input"><span class="eyebrow">先认识输入 · 再运行 OPC</span>
 <h3>工程师拿到的 GDS，里面装的是什么？</h3>
 <p><strong>GDSII（常见扩展名 .gds）是二进制版图数据库。</strong>它记录几何坐标、图层编号、文字和单元引用。软件解析这些记录，再画成屏幕上的版图。它不是 PNG，也不是电路行为代码；OASIS 是另一种常用版图交换格式。</p>
-<h3>先把两个问题分开：这是哪一块版图？这些形状用来做什么？</h3>
-<p>一颗芯片有很多晶体管和连接线。GDS 把它们的几何保存下来，还需要两种组织方法：<strong>cell 用来组织可复用的版图模块；layer 用来区分图形的用途。</strong>它们不是制造先后的两级目录。</p>
-<div class="cell-layer-basics"><article><b>Cell：一块可以重复使用的版图</b><p>例如，把一个 NAND 门所需的晶体管区域、栅极、接触孔和局部导线，保存成一个 cell。它里面可以同时包含多个图层，也可以引用其他 cell。</p><p>芯片里需要很多个这种门，就把同一个 cell 放在多个位置。每一次放置叫一个<strong>实例</strong>，记录位置和方向，不必重复存整份几何。</p></article><article><b>Layer：给形状贴上加工用途标签</b><p>同一个 NAND 门里，有些形状定义栅极，有些定义接触孔，有些定义第一层金属。软件按 layer / datatype 编号区分它们，工艺图层表解释编号含义。</p><p><strong>一个 cell 有多个 layer；一个 layer 的图形分布在多个 cell 中。</strong>cell 不等于一层材料，layer 也不等于一个电路。</p></article></div>
-<div class="cell-layer-map" role="img" aria-label="芯片顶层引用同一NAND cell的两个实例，每个实例有栅极、接触孔、第一层金属图形；顶层另有连接线。加工第一层金属时要考虑实例中的金属和顶层金属走线。">
-<b>一颗芯片的版图：用同一种 NAND cell 放置两个实例</b>
-<div class="cell-instances"><article><strong>实例 A · 左边的位置</strong><span class="shape-gate">栅极图形</span><span class="shape-contact">接触孔图形</span><span class="shape-metal">Metal1 图形</span></article><article><strong>实例 B · 右边的位置</strong><span class="shape-gate">栅极图形</span><span class="shape-contact">接触孔图形</span><span class="shape-metal">Metal1 图形</span></article></div>
-<div class="top-routing">芯片上层还保存：连接这些实例的 Metal1 走线</div>
-<div class="layer-extraction">准备 Metal1 加工目标 ↓<br><strong>A 内的 Metal1 + B 内的 Metal1 + 上层的 Metal1 走线</strong></div>
-<p class="small">这是数据组织示意，不是实物截面。实际图形还要按工艺规则派生、合并或分解。</p></div>
+<h3>先认识 cell、layer 和 datatype</h3>
+<p>GDS 既要组织版图模块，也要给几何图形分类。这三个概念分别负责不同的事情：</p>
+<div class="table-wrap"><table><thead><tr><th>概念</th><th>是什么</th><th>用来做什么</th></tr></thead><tbody>
+<tr><td><strong>Cell · 版图单元</strong></td><td>一个有名字的几何容器，可以保存图形，也可以引用其他 cell。</td><td>组织版图层级并复用模块。一次引用记录放置位置和方向，称为实例。cell 不是材料层。</td></tr>
+<tr><td><strong>Layer · 层号</strong></td><td>附在几何图形上的分类编号。</td><td>按工艺约定区分图形所属的类别；编号本身不表示材料高度或加工顺序。</td></tr>
+<tr><td><strong>Datatype · 用途分类号</strong></td><td>与 layer 一起记录在几何图形上的另一个分类编号。</td><td>进一步区分同一 layer 下的图形类别。具体用途查对应工艺的映射表，不由 GDS 格式统一规定。</td></tr>
+</tbody></table></div>
+<div class="input-package"><b>Cell 管组织，layer / datatype 管分类</b><p><strong>一个 cell 内可以包含多种 layer / datatype 的图形；同一种分类也可以出现在多个 cell 中。</strong>查看器常把每个 layer / datatype 组合列为一个显示项，所以列表里“有几层”不等于实物有几层材料。</p><p><code>layer / datatype</code> 的斜杠只是软件显示两个编号的写法。下面直接用波导图里的 <code>1/0</code> 和 <code>1/1</code> 来读。</p></div>
 <div class="layer-datatype-visual" id="layer-datatype-visual">
 <h3>用这张波导图理解 layer / datatype</h3>
 <p>先看左边的实物截面，再看右边的俯视版图：<strong>左边希望做出的不同宽度结构，用右边不同分类的二维图形来描述。</strong>这里只借这张图认识版图编号，不展开波导的加工流程。</p>
@@ -71,9 +70,9 @@
 <p><strong>这些编号怎样对应材料和加工，由这项工艺的映射与规则规定。</strong>不能只凭 <code>1/0</code>、<code>1/1</code> 推断材料、高度或刻蚀顺序；datatype 为 1 也不意味着“第一层金属”。本图未提供完整工艺规则，因此不据此指定每类图形的刻蚀深度或 OPC 方式。</p>
 <p class="small">图片由你提供，原图含 OpticalNote 及作者水印；未修改图片。这里只解释图中可见的编号与几何对应关系。</p>
 </div>
-<h3>“选 cell”是确定设计范围，不是每个门都要人工点一次。</h3>
+<h3>“选 cell”是确定设计范围，不是逐个实例人工检查。</h3>
 <p>完整芯片通常有一个<strong>顶层 cell</strong>，引用下面的模块和实例。指定这个入口，软件就能沿着引用找到它们，并把各实例的坐标放到整颗芯片的坐标中。单元库则可能有很多独立 cell，尚未组成一颗芯片。</p>
-<p>看一个门的结构，可以打开那个小 cell；做整颗芯片的任务，则通常从指定顶层处理其覆盖的设计。<strong>文件里存在但未被该顶层引用的其他库单元，不会因此全部成为本次芯片的输入。</strong></p>
+<p>查看局部模块，可以打开相应 cell；做整颗芯片的任务，则通常从指定顶层处理其覆盖的设计。<strong>文件里存在但未被该顶层引用的其他库单元，不会因此全部成为本次芯片的输入。</strong></p>
 <h3>为什么 OPC 任务要指定加工层？谁决定选哪个？</h3>
 <p>制造栅极、金属线和通孔，需要不同的加工图案，设备 / 材料条件和误差要求也可能不同。不能把全部图层叠成一张图，一次曝光就制造整颗芯片。</p>
 <p><strong>任务范围由已批准的工艺和掩模流程确定。</strong>例如，这项任务负责准备某设计的 Metal1 掩模数据，工程师就加载该步骤对应的图形派生规则、工艺模型、OPC 配方和验证标准。不是在彩色版图里随意挑一个颜色；任务也可以通过脚本批量配置，不一定靠点击。</p>
@@ -97,10 +96,10 @@
 </ol>
 <div class="input-package"><b>这条顺序的逻辑</b><p><strong>确定任务 → 准备正确输入 → 建立基线 → 找到失败原因 → 改候选 → 验证后交付。</strong>工程师组织和诊断实验，软件批量计算几何。这个顺序不是在工厂里逐层沉积材料的制造顺序。</p></div>
 <h3>OPC 的“做功”，落在哪里？</h3>
-<p>例如 A 实例中的一条 Metal1 线，预测印出后线端偏短。求解器可能把<strong>候选掩模的线端</strong>向外延长，再仿真比较。它改变的是数字掩模几何，不是直接改动实体晶圆，也不是重新设计 NAND 门的逻辑功能。</p>
-<p><strong>Cell 的边框不会挡住光学影响。</strong>A 中的图形可能受 B 或外部走线影响。同一 cell 放在不同邻域，未必能无条件复用完全相同的修正；工具会依据上下文和流程规则处理可复用部分及边界。</p>
+<p>例如某条 Metal1 线，预测印出后线端偏短。求解器可能把<strong>候选掩模的线端</strong>向外延长，再仿真比较。它改变的是数字掩模几何，不是直接改动实体晶圆，也不是重新设计 NAND 门的逻辑功能。</p>
+<p><strong>Cell 的边框不会挡住光学影响。</strong>单元中的图形可能受相邻单元或外部走线影响。同一 cell 放在不同邻域，未必能无条件复用完全相同的修正；工具会依据上下文和流程规则处理可复用部分及边界。</p>
 <div class="source-links"><a href="https://www.klayout.de/intro.html" target="_blank" rel="noopener">KLayout：层级、cell 与图层操作 ↗</a><a href="https://www.synopsys.com/manufacturing/mask-solutions/proteus.html" target="_blank" rel="noopener">Proteus：数据准备、全芯片修正与验证 ↗</a></div>
-<p class="small">以上为依据公开功能整理的代表性流程，具体分工、层处理方式和验收范围由项目决定；NAND / Metal1 例子用于说明，不表示本页面已运行 SG13G2 的工业 OPC。</p>
+<p class="small">以上为依据公开功能整理的代表性流程，具体分工、层处理方式和验收范围由项目决定；Metal1 例子用于说明，不表示本页面已运行 SG13G2 的工业 OPC。</p>
 <details class="input-reference"><summary>补充参考：下载文件的图层、材料关系与软件</summary><h3>结合你下载的 sg13g2_stdcell.gds</h3>
 <p>检查这份文件，得到 <strong>84 个 cell、15 种层号与用途号组合（含文字记录）</strong>。例如 sg13g2_nand2b_1 是其中一个单元。这是你这份文件的统计，不是 SG13G2 全工艺的层数，也不是 84 层材料。</p>
 <p>查看器里的 <code>8/0</code> 表示“层号 8、用途号 0”，<code>8/2</code> 是同一层号的另一种用途。<strong>数字是分类编码，不是高度或加工顺序；颜色也是显示设置。</strong>下面的名称来自 IHP 图层表，换工艺后相同编号可能有别的含义。</p>
