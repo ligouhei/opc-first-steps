@@ -38,3 +38,4 @@
 @media(max-width:760px){.layer-datatype-visual svg text{font-size:18px}}
 .waveguide-reference{margin:20px 0}.waveguide-reference img{display:block;width:100%;height:auto}.waveguide-reference figcaption{font-size:12px;line-height:1.7;margin-top:10px;color:var(--muted)}
 .scan-monitor{margin:26px 0;padding:26px;border:1px solid var(--line);background:var(--white);scroll-margin-top:90px}.scan-monitor h4{font-size:17px;margin:26px 0 16px}.scan-monitor p,.scan-monitor li{font-size:14px;line-height:1.9}.scan-monitor li{margin:12px 0}.scan-monitor table{width:100%;table-layout:fixed}.scan-monitor td{vertical-align:top;overflow-wrap:anywhere}.scan-matrix td,.scan-matrix th{text-align:center}@media(max-width:760px){.scan-monitor{padding:18px}.scan-monitor td,.scan-monitor th{font-size:12px;padding:10px 8px}}
+.optimization-loops{margin:28px 0;scroll-margin-top:90px}.optimization-loops h4{font-size:17px;margin:24px 0 14px}

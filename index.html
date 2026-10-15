@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="zh-CN">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="给 AI 工程师的 OPC 图解入门。认识晶圆、裸芯片、封装，探索光刻补偿、工具流程和模型数据。"><title>看懂 OPC · 从晶圆到模型</title><link rel="stylesheet" href="style.css?v=validation-scope"><style>.fabrication-steps svg{width:100%;max-width:400px;margin:8px auto}.fabrication-reading svg{width:100%;max-width:420px;margin:14px auto}</style></head>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="给 AI 工程师的 OPC 图解入门。认识晶圆、裸芯片、封装，探索光刻补偿、工具流程和模型数据。"><title>看懂 OPC · 从晶圆到模型</title><link rel="stylesheet" href="style.css?v=optimization-loops"><style>.fabrication-steps svg{width:100%;max-width:400px;margin:8px auto}.fabrication-reading svg{width:100%;max-width:420px;margin:14px auto}</style></head>
 <body>
 <header class="topbar"><a class="brand" href="#"><span class="brand-icon">◉</span> 看懂 OPC<span class="brand-sub">半导体 / AI 入门手册</span></a><a class="top-action" href="#lab">动手看补偿 <span>↗</span></a></header>
 <aside class="sidebar"><div class="sidebar-label">学习地图 <span>01—08</span></div><nav aria-label="章节导航"><a href="#objects">01 <span>先认识实物</span></a><a href="#lithography">02 <span>光刻怎么印图形</span></a><a href="#lab">03 <span>OPC 补偿实验</span></a><a href="#pipeline">04 <span>输入与工作流</span></a><a href="#tools">05 <span>软件与真实难点</span></a><a href="#ai">06 <span>模型在哪介入</span></a><a href="#data">07 <span>数据怎么构造</span></a><a href="#start">08 <span>从一个小项目开始</span></a></nav><div class="sidebar-note"><span class="tiny-dot"></span> 从零开始，不需要电路基础<br>照片、示意与预测分开呈现</div><div class="progress-label">阅读进度 <span id="progress-text">0%</span></div><div class="progress-track"><i id="progress-bar"></i></div></aside>
@@ -91,17 +91,37 @@
 <tr><td>本次掩模覆盖的全部目标图形</td><td><strong>正式任务通常批量覆盖规定范围。</strong>软件按配方处理相关图形，最终按规定范围验证；不只处理工程师屏幕上看见的几条线。</td></tr>
 <tr><td>每条线的每段边缘</td><td><strong>不一定都发生移动，更不会统一移动相同距离。</strong>某处已经合格，可以不动；某处需要延长，某处需要收缩或辅助结构。具体由算法、规则和约束决定。</td></tr>
 </tbody></table></div>
-<h3>OPC 工程师实际按什么顺序工作？为什么这样排？</h3>
+<h3>OPC 工程流程：从接收任务到验证交付</h3>
 <p>下面讲的是<strong>已有合格工艺模型时的配方开发与设计交付流程</strong>。模型建立属于另一段工作，放在第五章。成熟生产任务可以复用已批准配方直接运行；遇到新需求或失败，再进入调优循环。</p>
 <ol class="opc-task-order">
 <li><strong>接收任务：明确设计和加工步骤。</strong><p>确认是哪份设计、哪个版本、哪个顶层、哪项掩模任务，以及目标是显影后还是刻蚀后的图形。先确定“要制造什么”，才知道应该读取哪些数据。</p></li>
 <li><strong>准备输入：把设计分类变成该任务的目标。</strong><p>检查图层映射、坐标单位、极性、实例位置和必要图形派生，保留邻近图形。输入准备错了，再精确的求解器也会算错对象。</p></li>
-<li><strong>加载模型、配方和验收规则，跑现有方案。</strong><p>模型负责预测这项工艺怎样印；配方规定软件怎样修改掩模；验收规则规定什么结果合格。先跑基线，才知道现在有哪些问题。</p></li>
-<li><strong>查看报告，定位失败区域。</strong><p>软件给出错误坐标和统计，工程师看线端、拐角、孔或邻近图形。可以裁剪一个局部片段研究，但要保留外围邻域。这一步是诊断，不是只对这些小片段完成最终生产交付。</p></li>
-<li><strong>调整相关策略，重新计算候选。</strong><p>例如调整边缘分段、移动限制、迭代或辅助结构策略，由求解器生成新掩模；局部研究也可通过几何工具改候选。目标固定，比较修正前后结果。</p></li>
+<li><strong>加载模型、配方和验收规则，跑现有方案。</strong><p>模型负责预测这项工艺怎样印；配方规定软件怎样修改掩模；验收规则规定什么结果合格。<strong>本步由软件按现有配方自动执行“仿真 → 算误差 → 修改掩模 → 再仿真”的内部循环</strong>，得到基线候选及其验证结果。</p></li>
+<li><strong>查看报告，定位失败区域。</strong><p>软件验证自动优化后的候选，给出仍不合格位置的坐标和统计；工程师查看线端、拐角、孔或邻近图形。可以裁剪一个局部片段研究，但要保留外围邻域。这一步是诊断，不是只对这些小片段完成最终生产交付。</p></li>
+<li><strong>调整相关策略，重新计算候选。</strong><p>根据诊断调整边缘分段、移动限制、迭代或辅助结构策略。<strong>软件再按新配方执行一次内部自动优化</strong>，生成新的候选掩模。目标固定，按同一标准比较；这个配方选择过程也可以借助自动搜索。</p></li>
 <li><strong>扩大回归与验证，再交付。</strong><p>局部有效后检查更多图形、规定焦距 / 剂量条件、掩模制造约束及必要的跨层对准关系；正式设计按规定范围处理和验证。合格的数据再交给后续掩模数据准备与制造，并保留版本和报告。</p></li>
 </ol>
 <div class="input-package"><b>这条顺序的逻辑</b><p><strong>确定任务 → 准备正确输入 → 建立基线 → 找到失败原因 → 改候选 → 验证后交付。</strong>工程师组织和诊断实验，软件批量计算几何。这个顺序不是在工厂里逐层沉积材料的制造顺序。</p></div>
+<div class="optimization-loops" id="optimization-loops">
+<h3>一次作业内优化掩模，多次作业之间调整配方</h3>
+<p><strong>第 3 步和第 5 步都包含软件自动优化。</strong>“运行 OPC”不是只仿真一次，而是由求解器在当前模型、目标、配方和约束下，反复计算并修改候选掩模。实际流程可以使用规则、边缘式优化、ILT 或组合方法。</p>
+<div class="input-package"><b>软件内部循环：本次配方固定，候选掩模不断变化</b><p><strong>仿真 → 计算误差 → 修改候选掩模 → 再仿真 → 达到停止条件。</strong></p><p>软件计算具体边缘怎样移动、形状怎样改变；配置相应模块与规则后，还可生成或优化 SRAF。不是每次 OPC 调用都默认启用全部修改能力。</p></div>
+<div class="input-package"><b>作业之间的调优循环：比较结果，再选择运行策略</b><p><strong>配方 A → 自动优化得到掩模 A → 验证和诊断 → 调整为配方 B → 自动优化得到掩模 B → 同一标准复验。</strong></p><p>调整对象是分段方式、允许修改的范围、迭代预算、误差权重或辅助结构策略等。本段指已有合格模型下的配方调优，通常固定工艺模型和验收标准。这个外层循环也可以由脚本、参数搜索或 Agent 部分自动化，不一定全部人工完成。</p></div>
+<h4>自动优化后的候选，仍可能不满足验收要求</h4>
+<p>求解器是在有限时间、允许的修改范围和相互牵制的目标下寻找方案。<strong>输入条件明确，不代表一定存在合格解；即使存在，也不保证本次算法在预算内找到。</strong>第 4 步报告的失败区域，通常已经被当前流程处理过。</p>
+<div class="table-wrap"><table><thead><tr><th>失败来源</th><th>发生了什么</th><th>下一次实验的方向</th></tr></thead><tbody>
+<tr><td>修改范围受限</td><td>边缘已到移动上限，或当前表示 / 策略无法形成需要的形状。</td><td>检查限制、分段及可用修正策略；改变后重新验证制造规则与邻居。</td></tr>
+<tr><td>邻近图形相互影响</td><td>延长一条线可改善线端，却可能让相邻间隙过小，甚至桥连。</td><td>联合查看邻域、约束和目标权重，不孤立修一处。</td></tr>
+<tr><td>不同工况要求冲突</td><td>同一张掩模需适用于规定条件，标称条件改善可能使偏焦条件变差。</td><td>检查优化使用的条件、权重和稳健性目标；不是每个条件各换一张掩模。</td></tr>
+<tr><td>计算预算或搜索限制</td><td>达到迭代上限、停滞、振荡，或停在局部较优解，但误差仍超限。</td><td>结合迭代记录判断是否增加预算或调整策略；单纯增加迭代不保证有效。</td></tr>
+<tr><td>目标在当前约束下不可实现</td><td>受分辨能力、掩模制造要求等限制，仅靠现有 OPC 调整无法全部满足要求。</td><td>与相关团队评估设计或工艺方案；不能无限扩大修正或放宽验收来宣称成功。</td></tr>
+</tbody></table></div>
+<p>验证还可能比优化覆盖更多图形、条件或检查项目，因此求解器的内部目标下降，也不代表完整验证一定通过。</p>
+<h4>一个达到移动上限的诊断例子</h4>
+<p>假设配方允许某段边缘最多外移 <strong>5 nm</strong>。软件自动迭代后已经移到上限，预测线端仍偏短，验证便会报告失败。工程师先检查迭代记录和邻域，判断限制是否合理、是否存在间距风险，再决定下一次实验。这个数字仅用于说明，不是推荐参数；放宽限制也不保证合格。</p>
+<div class="input-package"><b>三个状态需要分别确认</b><p><strong>运行正常结束：</strong>程序完成并产生输出。<br><strong>优化取得改善：</strong>某些误差或目标函数较基线降低。<br><strong>通过验收：</strong>规定范围、条件及检查项目满足要求。</p><p>前两项都不能代替第三项。正式交付依据验证结果，而不是仅依据退出码、迭代停止或掩模几何发生变化。</p></div>
+<div class="source-links"><a href="https://www.synopsys.com/manufacturing/mask-solutions/proteus.html" target="_blank" rel="noopener">Proteus：修正、配方调优与独立验证 ↗</a><a href="https://github.com/OpenOPC/OpenILT#preliminaries" target="_blank" rel="noopener">OpenILT：仿真与优化循环 ↗</a></div>
+</div>
 <h3>OPC 的“做功”，落在哪里？</h3>
 <p>例如某条 Metal1 线，预测印出后线端偏短。求解器可能把<strong>候选掩模的线端</strong>向外延长，再仿真比较。它改变的是数字掩模几何，不是直接改动实体晶圆，也不是重新设计 NAND 门的逻辑功能。</p>
 <p><strong>Cell 的边框不会挡住光学影响。</strong>单元中的图形可能受相邻单元或外部走线影响。同一 cell 放在不同邻域，未必能无条件复用完全相同的修正；工具会依据上下文和流程规则处理可复用部分及边界。</p>
